@@ -17,7 +17,9 @@ extension CLLocationCoordinate2D{
     static let griffithObservatory = CLLocationCoordinate2D(latitude: 34.1184, longitude: -118.3004)
     static let griffithParking = CLLocationCoordinate2D(latitude: 34.1172, longitude: -118.30710)
     static let griffithParking2 = CLLocationCoordinate2D(latitude: 34.1163, longitude: -118.30700)
+    static let lalaland = CLLocationCoordinate2D(latitude: 34.0328, longitude: -118.4943)
     // MDR lat 33.98029 , long: -118.45174
+    // 34.0328° N, 118.4943° W
 }
 
 extension MKCoordinateRegion {
@@ -63,7 +65,7 @@ struct ContentView: View {
                     Marker("Hollywood Sign", coordinate: .hollywoodSign)
                         .tint(.orange)
                     Marker("Griffith Observatory", coordinate: .griffithObservatory)
-                    
+                    //Marker("LalaLand Kind Cafe", coordinate: .lalaland)
                     Annotation("Parking Spot", coordinate: .griffithParking) {
                         ZStack {
                                                     RoundedRectangle(cornerRadius: 5)
@@ -81,10 +83,18 @@ struct ContentView: View {
                     }
                     .annotationTitles(.hidden)
                     
+                    // this only works when getDirections uses a marker that is on a mapped adress. Not griffithParking
+                    if let route {
+                        MapPolyline(route)
+                            .stroke(.blue, lineWidth: 5)
+                    }
+                    
                     ForEach(searchResults, id: \.self) { result in
                         Marker(item: result)
                     }
                     .annotationTitles(.hidden)
+                    
+                    UserAnnotation() //shows user as blue dot on map
                 }
                 .mapStyle(MapStyle.standard(elevation: .realistic))
                 .safeAreaInset(edge: .bottom) {
@@ -112,6 +122,11 @@ struct ContentView: View {
                 }
                 .onMapCameraChange { context in
                     visibleRegion = context.region
+                }
+                .mapControls {
+                    MapUserLocationButton()
+                    MapCompass()
+                    MapScaleView()
                 }
             } // end NavigationStack
         }
