@@ -58,94 +58,78 @@ struct ContentView: View {
     
     
     var body: some View {
-        
-        
-        NavigationStack {
-           
-            Map(position: $position, selection: $selectedResult)  {
-               //  Marker("Initial Location ", coordinate: .initialLocation)
-                Marker("Hollywood Sign", coordinate: .hollywoodSign)
-                    .tint(.orange)
-                Marker("Griffith Observatory", coordinate: .griffithObservatory)
-                
-                // for Markers, you can use systemImage, monogram or image assets
-                    Annotation ("Parking Spot", coordinate: .griffithParking) {
+            NavigationStack {
+                Map(position: $position, selection: $selectedResult) {
+                    Marker("Hollywood Sign", coordinate: .hollywoodSign)
+                        .tint(.orange)
+                    Marker("Griffith Observatory", coordinate: .griffithObservatory)
+                    
+                    Annotation("Parking Spot", coordinate: .griffithParking) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(.background)
-                            RoundedRectangle(cornerRadius: 5)
-                               .stroke(.secondary, lineWidth: 1)
-                            Image(systemName: "car")
-                                        .padding(5)
-                        }
+                                                    RoundedRectangle(cornerRadius: 5)
+                                                        .fill(.background)
+                                                    RoundedRectangle(cornerRadius: 5)
+                                                       .stroke(.secondary, lineWidth: 1)
+                                                    Image(systemName: "car")
+                                                                .padding(5)
+                                                }
                     }
                     
                     Annotation("Parking Entrance", coordinate: .griffithParking2) {
                         Text("🅿️")
                             .padding(5)
-                   }
-                    .annotationTitles(.hidden)
-                
-                    ForEach(searchResults, id: \.self){ result in
-                        Marker(item:result)
                     }
                     .annotationTitles(.hidden)
+                    
+                    ForEach(searchResults, id: \.self) { result in
+                        Marker(item: result)
+                    }
+                    .annotationTitles(.hidden)
+                }
+                .mapStyle(MapStyle.standard(elevation: .realistic))
+                .safeAreaInset(edge: .bottom) {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 0) {
+                            if let selectedResult {
+                                ItemInfoView(selectedResult: selectedResult, route: route)
+                                    .frame(height: 128)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    .padding([.top, .horizontal])
+                            }
+                            LAButtons(position: $position, searchResults: $searchResults, visibleRegion: visibleRegion)
+                                .padding(.top)
+                        }
+                        Spacer()
+                    }
+                    .background(.thinMaterial)
+                }
+                .onChange(of: searchResults) { _ in
+                    position = .automatic
+                }
+                .onChange(of: selectedResult) { _ in
+                    getDirections()
+                }
+                .onMapCameraChange { context in
+                    visibleRegion = context.region
+                }
+            } // end NavigationStack
+        }
 
-            }
-             .mapStyle(MapStyle.standard (elevation: .realistic))
-            //.mapStyle(MapStyle.imagery (elevation: .realistic))
-           // .mapStyle(MapStyle.hybrid (elevation: .realistic))
-            
-            // using safe area inset to not obscure map results
-             .safeAreaInset(edge: .bottom){
-                 HStack {
-                     Spacer()
-                     VStack(spacing:0){
-                         if let selectedResult{
-                             ItemInfoView(selectedResult: selectedResult, route: route)
-                                 .frame(height:128)
-                                 .clipShape(RoundedRectangle(cornerRadius: 10))
-                                 .padding([.top, .horizontal])
-                         }
-                         LAButtons(position: $position, searchResults:   $searchResults, visibleRegion: visibleRegion)
-                             .padding(.top)
-                     }
-                     Spacer()
-                 }
-                 .background(.thinMaterial)
-             }
-            
-            // onChange lets us know when search resultsa are updated
-             .onChange(of: searchResults){
-                 position  = .automatic
-             }
-             .onChange(of: selectedResult){
-                 getDirections()
-             }
-             .onMapCameraChange {context in
-                 visibleRegion = context.region
-             }
-    
-        } // end navigation stack
-        
-        
-        
-        func getDirections(){
+        func getDirections() {
             route = nil
-            guard let selectedResult else {return}
+            guard let selectedResult else { return }
             
             let request = MKDirections.Request()
-            request.source =  MKMapItem(placemark: MKPlacemark(coordinate: .griffithParking))
+            request.source = MKMapItem(placemark: MKPlacemark(coordinate: .griffithParking))
             request.destination = selectedResult
             
             Task {
                 let directions = MKDirections(request: request)
                 let response = try? await directions.calculate()
-                route = response?routes.first
+                route = response?.routes.first
             }
         }
-        
-    } //end view
         
 } // struct
 
